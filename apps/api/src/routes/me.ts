@@ -4,6 +4,7 @@ import type { Db } from "../db/client";
 import { makeRequireUser } from "../lib/require-user";
 import { publicUser } from "../services/auth";
 import { getProfile, updateProfile } from "../services/profile";
+import { getUserProgress } from "../services/progress";
 
 type Opts = { db: Db };
 
@@ -13,7 +14,8 @@ export const meRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
 
   app.get("/me", { preHandler: requireUser }, async (request, reply) => {
     const profile = await getProfile(db, request.user!.id);
-    return reply.send({ user: publicUser(request.user!), profile, progress: 0 });
+    const progress = await getUserProgress(db, request.user!.id);
+    return reply.send({ user: publicUser(request.user!), profile, progress });
   });
 
   app.put("/me/profile", { preHandler: requireUser }, async (request, reply) => {

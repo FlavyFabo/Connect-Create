@@ -131,7 +131,7 @@ export async function updateMilestone(
       .where(eq(milestones.id, milestone.id));
     await db.delete(evidence).where(eq(evidence.milestoneId, milestone.id));
     await recordEvent(db, {
-      userId,
+      userId: milestone.completedBy ?? userId,
       projectId: milestone.projectId,
       milestoneId: milestone.id,
       type: "evidence_voided",
@@ -140,7 +140,7 @@ export async function updateMilestone(
   } else if (input.evidence === null && milestone.state === "done") {
     await db.delete(evidence).where(eq(evidence.milestoneId, milestone.id));
     await recordEvent(db, {
-      userId,
+      userId: milestone.completedBy ?? userId,
       projectId: milestone.projectId,
       milestoneId: milestone.id,
       type: "evidence_voided",
@@ -193,7 +193,7 @@ export async function confirmMilestone(
     .set({ state: "confirmed", confirmedBy: userId, confirmedAt: now })
     .where(eq(milestones.id, milestone.id));
   await recordEvent(db, {
-    userId,
+    userId: milestone.completedBy!,
     projectId: milestone.projectId,
     milestoneId: milestone.id,
     type: "milestone_confirmed",

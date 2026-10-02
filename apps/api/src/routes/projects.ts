@@ -3,6 +3,7 @@ import { createProjectInputSchema, listProjectsQuerySchema } from "@connect-crea
 import type { Db } from "../db/client";
 import { makeRequireUser } from "../lib/require-user";
 import { createProject, getProject, listProjects } from "../services/project";
+import { getProjectProgress } from "../services/progress";
 import { normalizeTags } from "../services/profile";
 
 type Opts = { db: Db };
@@ -48,6 +49,7 @@ export const projectRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
     if (!project) {
       return reply.code(404).send({ error: "not_found" });
     }
-    return reply.send({ project, progress: 0 });
+    const progress = await getProjectProgress(db, id);
+    return reply.send({ project, progress });
   });
 };
