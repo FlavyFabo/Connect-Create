@@ -37,6 +37,25 @@ export const profileInputSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 
+export const projectStatusSchema = z.enum(["open", "in_progress", "paused", "done"]);
+export type ProjectStatus = z.infer<typeof projectStatusSchema>;
+
+export const createProjectInputSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().min(1).max(5000),
+  category: z.string().min(1).max(100),
+  skillsNeeded: z.array(skillTagSchema).min(1).max(10),
+});
+export type CreateProjectInput = z.infer<typeof createProjectInputSchema>;
+
+export const listProjectsQuerySchema = z.object({
+  skills: z.string().max(1000).optional(),
+  category: z.string().max(100).optional(),
+  sort: z.enum(["match", "recent"]).optional(),
+  cursor: z.string().max(100).optional(),
+});
+export type ListProjectsQuery = z.infer<typeof listProjectsQuerySchema>;
+
 export const apiErrorSchema = z.object({
   error: z.string(),
   issues: z.array(z.string()).optional(),
