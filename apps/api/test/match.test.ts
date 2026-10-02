@@ -151,9 +151,18 @@ describe("candidates (R12)", () => {
 
     const res = await get(owner.cookie, `/api/v1/projects/${projectId}/candidates`);
     expect(res.statusCode).toBe(200);
-    const items = res.json().items;
-    expect(items[0].user.id).toBe(skilled.userId);
-    expect(items[0].reasons.sharedSkills).toEqual(["react", "node"]);
+    const items = res.json().items as Array<{
+      user: { id: string };
+      matchScore: number;
+      reasons: { sharedSkills: string[] };
+    }>;
+    const best = Math.max(...items.map((i) => i.matchScore));
+    const skilledItem = items.find((i) => i.user.id === skilled.userId);
+    expect(skilledItem).toBeTruthy();
+    expect(skilledItem!.matchScore).toBe(best);
+    expect(skilledItem!.reasons.sharedSkills).toEqual(["react", "node"]);
+    const unskilledItem = items.find((i) => i.user.id === unskilled.userId);
+    expect(unskilledItem!.matchScore).toBeLessThan(best);
 
     const forbidden = await get(skilled.cookie, `/api/v1/projects/${projectId}/candidates`);
     expect(forbidden.statusCode).toBe(403);

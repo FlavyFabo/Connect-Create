@@ -79,6 +79,17 @@ export const createNoteInputSchema = z.object({
 });
 export type CreateNoteInput = z.infer<typeof createNoteInputSchema>;
 
+export const createRequestInputSchema = z.object({
+  message: z.string().min(1).max(500),
+  userId: z.string().uuid().optional(),
+});
+export type CreateRequestInput = z.infer<typeof createRequestInputSchema>;
+
+export const createMessageInputSchema = z.object({
+  body: z.string().min(1).max(2000),
+});
+export type CreateMessageInput = z.infer<typeof createMessageInputSchema>;
+
 export const apiErrorSchema = z.object({
   error: z.string(),
   issues: z.array(z.string()).optional(),
