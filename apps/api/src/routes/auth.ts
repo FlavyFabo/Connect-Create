@@ -48,8 +48,4 @@ export const authRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
     if (request.sessionToken) await destroySession(db, request.sessionToken);
     return reply.clearCookie(SESSION_COOKIE, { path: "/" }).send({ ok: true });
   });
-
-  app.get("/me", { preHandler: requireUser }, async (request, reply) => {
-    return reply.send({ user: publicUser(request.user!), progress: 0 });
-  });
 };

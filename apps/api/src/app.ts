@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import type { Db } from "./db/client";
 import type { Env } from "./env";
 import { authRoutes } from "./routes/auth";
+import { meRoutes } from "./routes/me";
 
 export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInstance> {
   const { db, env } = deps;
@@ -14,6 +15,7 @@ export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInsta
     db,
     sessionTtlDays: env.SESSION_TTL_DAYS,
   });
+  await app.register(meRoutes, { prefix: "/api/v1", db });
 
   app.setErrorHandler((err, request, reply) => {
     request.log.error(err);
