@@ -93,7 +93,7 @@ export async function updateMilestone(
   db: Db,
   milestone: MilestoneRow,
   userId: string,
-  input: { title?: string; state?: "todo" | "done"; evidence?: EvidenceInput | null },
+  input: { title?: string | undefined; state?: "todo" | "done" | undefined; evidence?: EvidenceInput | null | undefined },
 ): Promise<UpdateMilestoneResult> {
   if (milestone.state === "confirmed") {
     return { ok: false, error: "invalid_transition" };
