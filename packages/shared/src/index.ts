@@ -56,6 +56,29 @@ export const listProjectsQuerySchema = z.object({
 });
 export type ListProjectsQuery = z.infer<typeof listProjectsQuerySchema>;
 
+export const evidenceInputSchema = z.object({
+  type: z.enum(["text", "url", "file"]),
+  content: z.string().min(1).max(5000),
+});
+export type EvidenceInput = z.infer<typeof evidenceInputSchema>;
+
+export const createMilestoneInputSchema = z.object({
+  title: z.string().min(1).max(200),
+});
+export type CreateMilestoneInput = z.infer<typeof createMilestoneInputSchema>;
+
+export const updateMilestoneInputSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  state: z.enum(["todo", "done"]).optional(),
+  evidence: evidenceInputSchema.nullable().optional(),
+});
+export type UpdateMilestoneInput = z.infer<typeof updateMilestoneInputSchema>;
+
+export const createNoteInputSchema = z.object({
+  body: z.string().min(1).max(2000),
+});
+export type CreateNoteInput = z.infer<typeof createNoteInputSchema>;
+
 export const apiErrorSchema = z.object({
   error: z.string(),
   issues: z.array(z.string()).optional(),

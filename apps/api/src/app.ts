@@ -5,6 +5,7 @@ import type { Env } from "./env";
 import { authRoutes } from "./routes/auth";
 import { meRoutes } from "./routes/me";
 import { projectRoutes } from "./routes/projects";
+import { workbenchRoutes } from "./routes/workbench";
 
 export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInstance> {
   const { db, env } = deps;
@@ -18,6 +19,7 @@ export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInsta
   });
   await app.register(meRoutes, { prefix: "/api/v1", db });
   await app.register(projectRoutes, { prefix: "/api/v1", db });
+  await app.register(workbenchRoutes, { prefix: "/api/v1", db });
 
   app.setErrorHandler((err, request, reply) => {
     request.log.error(err);
