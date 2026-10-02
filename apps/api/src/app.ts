@@ -7,9 +7,16 @@ import { meRoutes } from "./routes/me";
 import { projectRoutes } from "./routes/projects";
 import { workbenchRoutes } from "./routes/workbench";
 import { requestRoutes } from "./routes/requests";
+import { guideRoutes } from "./routes/guide";
+import { RuleBasedGuide, type GuideProvider } from "./services/guide";
 
-export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInstance> {
+export async function buildApp(deps: {
+  db: Db;
+  env: Env;
+  guide?: GuideProvider;
+}): Promise<FastifyInstance> {
   const { db, env } = deps;
+  const guide = deps.guide ?? new RuleBasedGuide();
   const app = Fastify({ logger: { level: "warn" } });
 
   await app.register(cookie);
@@ -22,6 +29,7 @@ export async function buildApp(deps: { db: Db; env: Env }): Promise<FastifyInsta
   await app.register(projectRoutes, { prefix: "/api/v1", db });
   await app.register(workbenchRoutes, { prefix: "/api/v1", db });
   await app.register(requestRoutes, { prefix: "/api/v1", db });
+  await app.register(guideRoutes, { prefix: "/api/v1", db, guide });
 
   app.setErrorHandler((err, request, reply) => {
     request.log.error(err);
