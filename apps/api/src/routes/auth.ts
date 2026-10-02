@@ -4,10 +4,12 @@ import type { Db } from "../db/client";
 import { SESSION_COOKIE, makeRequireUser } from "../lib/require-user";
 import { createSession, destroySession, login, publicUser, signup } from "../services/auth";
 
-type Opts = { db: Db; sessionTtlDays: number };
+import type { RateLimiter } from "../lib/rate-limit";
+
+type Opts = { db: Db; sessionTtlDays: number; rateLimiter: RateLimiter };
 
 export const authRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
-  const { db, sessionTtlDays } = opts;
+  const { db, sessionTtlDays, rateLimiter } = opts;
   const requireUser = makeRequireUser(db);
 
   const cookieOpts = {
@@ -19,6 +21,9 @@ export const authRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
   };
 
   app.post("/auth/signup", async (request, reply) => {
+    if (!rateLimiter.consume("signup", request.ip)) {
+      return reply.code(429).send({ error: "rate_limited" });
+    }
     const parsed = signupInputSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "invalid_input", issues: parsed.error.issues.map((i) => i.message) });

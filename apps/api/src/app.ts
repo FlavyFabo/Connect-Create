@@ -8,15 +8,19 @@ import { projectRoutes } from "./routes/projects";
 import { workbenchRoutes } from "./routes/workbench";
 import { requestRoutes } from "./routes/requests";
 import { guideRoutes } from "./routes/guide";
+import { reportRoutes } from "./routes/reports";
 import { RuleBasedGuide, type GuideProvider } from "./services/guide";
+import { defaultRateLimits, RateLimiter } from "./lib/rate-limit";
 
 export async function buildApp(deps: {
   db: Db;
   env: Env;
   guide?: GuideProvider;
+  rateLimiter?: RateLimiter;
 }): Promise<FastifyInstance> {
   const { db, env } = deps;
   const guide = deps.guide ?? new RuleBasedGuide();
+  const rateLimiter = deps.rateLimiter ?? new RateLimiter(defaultRateLimits);
   const app = Fastify({ logger: { level: "warn" } });
 
   await app.register(cookie);
@@ -24,12 +28,14 @@ export async function buildApp(deps: {
     prefix: "/api/v1",
     db,
     sessionTtlDays: env.SESSION_TTL_DAYS,
+    rateLimiter,
   });
   await app.register(meRoutes, { prefix: "/api/v1", db });
   await app.register(projectRoutes, { prefix: "/api/v1", db });
   await app.register(workbenchRoutes, { prefix: "/api/v1", db });
-  await app.register(requestRoutes, { prefix: "/api/v1", db });
-  await app.register(guideRoutes, { prefix: "/api/v1", db, guide });
+  await app.register(requestRoutes, { prefix: "/api/v1", db, rateLimiter });
+  await app.register(guideRoutes, { prefix: "/api/v1", db, guide, rateLimiter });
+  await app.register(reportRoutes, { prefix: "/api/v1", db });
 
   app.setErrorHandler((err, request, reply) => {
     request.log.error(err);

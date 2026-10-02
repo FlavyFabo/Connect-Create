@@ -90,6 +90,13 @@ export const createMessageInputSchema = z.object({
 });
 export type CreateMessageInput = z.infer<typeof createMessageInputSchema>;
 
+export const reportInputSchema = z.object({
+  targetType: z.enum(["project", "user", "message"]),
+  targetId: z.string().uuid(),
+  reason: z.string().min(1).max(1000),
+});
+export type ReportInput = z.infer<typeof reportInputSchema>;
+
 export const apiErrorSchema = z.object({
   error: z.string(),
   issues: z.array(z.string()).optional(),

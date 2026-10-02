@@ -13,7 +13,9 @@ import {
   listProjectRequests,
 } from "../services/requests";
 
-type Opts = { db: Db };
+import type { RateLimiter } from "../lib/rate-limit";
+
+type Opts = { db: Db; rateLimiter: RateLimiter };
 
 const CREATE_ERRORS: Record<string, number> = {
   not_found: 404,
@@ -25,11 +27,14 @@ const CREATE_ERRORS: Record<string, number> = {
 };
 
 export const requestRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
-  const { db } = opts;
+  const { db, rateLimiter } = opts;
   const requireUser = makeRequireUser(db);
 
   app.post("/projects/:id/requests", { preHandler: requireUser }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    if (!rateLimiter.consume("join_request", request.user!.id)) {
+      return reply.code(429).send({ error: "rate_limited" });
+    }
     const parsed = createRequestInputSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply
@@ -74,6 +79,9 @@ export const requestRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
     if (!project) return reply.code(404).send({ error: "not_found" });
     if (!(await isProjectMember(db, id, request.user!.id))) {
       return reply.code(403).send({ error: "forbidden" });
+    }
+    if (!rateLimiter.consume("message", request.user!.id)) {
+      return reply.code(429).send({ error: "rate_limited" });
     }
     const parsed = createMessageInputSchema.safeParse(request.body);
     if (!parsed.success) {

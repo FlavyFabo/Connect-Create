@@ -4,10 +4,12 @@ import { makeRequireUser } from "../lib/require-user";
 import { isProjectMember } from "../services/project";
 import { buildGuideContext, type GuideProvider } from "../services/guide";
 
-type Opts = { db: Db; guide: GuideProvider };
+import type { RateLimiter } from "../lib/rate-limit";
+
+type Opts = { db: Db; guide: GuideProvider; rateLimiter: RateLimiter };
 
 export const guideRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
-  const { db, guide } = opts;
+  const { db, guide, rateLimiter } = opts;
   const requireUser = makeRequireUser(db);
 
   async function loadContext(request: { params: unknown; user?: { id: string } }, reply: { code: (n: number) => { send: (b: unknown) => unknown } }) {
@@ -27,6 +29,9 @@ export const guideRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
   app.post("/projects/:id/guide/plan", { preHandler: requireUser }, async (request, reply) => {
     const ctx = await loadContext(request, reply);
     if (!ctx) return;
+    if (!rateLimiter.consume("guide", request.user!.id)) {
+      return reply.code(429).send({ error: "rate_limited" });
+    }
     try {
       const suggestions = await guide.plan(ctx);
       return reply.send({ suggestions });
@@ -38,6 +43,9 @@ export const guideRoutes: FastifyPluginAsync<Opts> = async (app, opts) => {
   app.post("/projects/:id/guide/nudge", { preHandler: requireUser }, async (request, reply) => {
     const ctx = await loadContext(request, reply);
     if (!ctx) return;
+    if (!rateLimiter.consume("guide", request.user!.id)) {
+      return reply.code(429).send({ error: "rate_limited" });
+    }
     try {
       const suggestion = await guide.nudge(ctx);
       return reply.send({ suggestion });
